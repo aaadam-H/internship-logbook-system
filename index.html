@@ -89,6 +89,20 @@
           </div>
         </div>
 
+        <div class="export-range" id="exportRange">
+          <span class="er-label">Range:</span>
+          <button type="button" class="er-preset is-active" data-range="all">All</button>
+          <button type="button" class="er-preset" data-range="month">This month</button>
+          <button type="button" class="er-preset" data-range="week">This week</button>
+          <button type="button" class="er-preset" data-range="custom">Custom…</button>
+          <span class="er-custom" id="erCustom" hidden>
+            <input type="date" id="erFrom" aria-label="Export from date">
+            <span class="er-dash">–</span>
+            <input type="date" id="erTo" aria-label="Export to date">
+          </span>
+          <span class="er-count" id="erCount"></span>
+        </div>
+
         <div class="table-wrap">
           <table id="logTable">
             <thead>

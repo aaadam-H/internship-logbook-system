@@ -236,6 +236,7 @@ function renderTable(){
   const rows = sortedEntries("desc");
   if(rows.length === 0){
     body.innerHTML = `<tr class="empty-row"><td colspan="5">No entries yet — log your first day above.</td></tr>`;
+    updateExportCount();
     return;
   }
   body.innerHTML = rows.map(entry => `
@@ -251,6 +252,8 @@ function renderTable(){
   body.querySelectorAll(".row-delete").forEach(btn => {
     btn.addEventListener("click", () => deleteEntry(btn.dataset.date));
   });
+
+  updateExportCount();
 }
 
 function offTag(dateStr){
@@ -483,9 +486,61 @@ async function saveProfile(){
 }
 
 /* ---------- exports ---------- */
+const exportState = { mode: "all" };   // all | month | week | custom
+
+function isoOf(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function rangeBounds(){
+  const t = new Date();
+  if(exportState.mode === "month"){
+    const y = t.getFullYear(), m = t.getMonth();
+    return [ isoOf(new Date(y, m, 1)), isoOf(new Date(y, m + 1, 0)) ];
+  }
+  if(exportState.mode === "week"){
+    const offset = (t.getDay() + 6) % 7;           // days since Monday
+    const mon = new Date(t); mon.setDate(t.getDate() - offset);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return [ isoOf(mon), isoOf(sun) ];
+  }
+  if(exportState.mode === "custom"){
+    return [ document.getElementById("erFrom").value || "",
+             document.getElementById("erTo").value || "" ];
+  }
+  return ["", ""];
+}
+function entriesInRange(order = "asc"){
+  const [from, to] = rangeBounds();
+  return sortedEntries(order).filter(e =>
+    (!from || e.date >= from) && (!to || e.date <= to)
+  );
+}
+function rangeSuffix(){
+  if(exportState.mode === "all") return "";
+  const [from, to] = rangeBounds();
+  if(exportState.mode === "month") return "-" + from.slice(0, 7);
+  if(exportState.mode === "week") return "-week-of-" + from;
+  if(from || to) return `-${from || "start"}_to_${to || "end"}`;
+  return "";
+}
+function rangeText(){
+  if(exportState.mode === "all") return "All entries";
+  const [from, to] = rangeBounds();
+  if(from && to) return `${prettyDate(from)} – ${prettyDate(to)}`;
+  if(from) return `From ${prettyDate(from)}`;
+  if(to) return `Up to ${prettyDate(to)}`;
+  return "All entries";
+}
+function updateExportCount(){
+  const el = document.getElementById("erCount");
+  if(!el) return;
+  const n = entriesInRange().length;
+  el.textContent = n === 1 ? "1 entry" : `${n} entries`;
+}
+
 function exportRows(){
   const header = ["Date", "Day", "Week", "Notes"];
-  const rows = sortedEntries("asc").map(e => [
+  const rows = entriesInRange("asc").map(e => [
     prettyDate(e.date), dayName(e.date), String(weekNumber(e.date, state.profile.startDate)), e.notes
   ]);
   return [header, ...rows];
@@ -505,7 +560,7 @@ function exportCSV(){
     const v = String(cell).replace(/"/g, '""');
     return /[",\n]/.test(v) ? `"${v}"` : v;
   }).join(",")).join("\n");
-  downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8;" }), "logbook.csv");
+  downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8;" }), `logbook${rangeSuffix()}.csv`);
 }
 
 function exportXLSX(){
@@ -514,7 +569,7 @@ function exportXLSX(){
   ws["!cols"] = [{wch:12},{wch:8},{wch:8},{wch:60}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Logbook");
-  XLSX.writeFile(wb, "logbook.xlsx");
+  XLSX.writeFile(wb, `logbook${rangeSuffix()}.xlsx`);
 }
 
 function exportPDF(){
@@ -523,21 +578,32 @@ function exportPDF(){
   const rows = exportRows();
   doc.setFontSize(14);
   doc.text(`${state.profile.name || "Internship"} — Logbook`, 14, 14);
+  doc.setFontSize(10);
+  doc.setTextColor(90);
+  doc.text(rangeText(), 14, 20);
+  doc.setTextColor(0);
   doc.autoTable({
     head: [rows[0]],
     body: rows.slice(1),
-    startY: 20,
+    startY: 25,
     styles: { fontSize: 9, cellPadding: 3 },
     headStyles: { fillColor: [36, 49, 61] },
     columnStyles: { 3: { cellWidth: 190 } }
   });
-  doc.save("logbook.pdf");
+  doc.save(`logbook${rangeSuffix()}.pdf`);
 }
 
 function exportPNG(){
-  html2canvas(document.querySelector(".log-section"), { backgroundColor: "#F5F1E4", scale: 2 }).then(canvas => {
-    canvas.toBlob(blob => downloadBlob(blob, "logbook.png"));
+  const [from, to] = rangeBounds();
+  const hidden = [];
+  document.querySelectorAll("#logTableBody tr").forEach(tr => {
+    const d = tr.dataset.date;
+    if(d && ((from && d < from) || (to && d > to))){ tr.style.display = "none"; hidden.push(tr); }
   });
+  const restore = () => hidden.forEach(tr => { tr.style.display = ""; });
+  html2canvas(document.querySelector(".log-section"), { backgroundColor: "#F5F1E4", scale: 2 })
+    .then(canvas => { restore(); canvas.toBlob(blob => downloadBlob(blob, `logbook${rangeSuffix()}.png`)); })
+    .catch(err => { restore(); console.error(err); showSaveStatus("Image export failed.", true); });
 }
 
 /* ---------- wire up events ---------- */
@@ -550,6 +616,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderProfile();
   renderTable();
   updateDayWeekReadout();
+  updateExportCount();
   updateSyncIndicator();
 
   document.getElementById("entryDate").addEventListener("change", updateDayWeekReadout);
@@ -586,10 +653,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderOffPeriods();
   });
 
+  document.querySelectorAll(".er-preset").forEach(btn => {
+    btn.addEventListener("click", () => {
+      exportState.mode = btn.dataset.range;
+      document.querySelectorAll(".er-preset").forEach(b => b.classList.toggle("is-active", b === btn));
+      document.getElementById("erCustom").hidden = exportState.mode !== "custom";
+      updateExportCount();
+    });
+  });
+  ["erFrom", "erTo"].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener("change", updateExportCount);
+    el.addEventListener("input", updateExportCount);
+  });
+
   document.querySelectorAll("[data-export]").forEach(btn => {
     btn.addEventListener("click", () => {
       const kind = btn.dataset.export;
-      if(state.entries.length === 0){ showSaveStatus("Nothing to export yet.", true); return; }
+      if(entriesInRange().length === 0){ showSaveStatus("No entries in the selected range.", true); return; }
       if(kind === "csv") exportCSV();
       if(kind === "xlsx") exportXLSX();
       if(kind === "pdf") exportPDF();
