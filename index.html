@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Cover stamp -->
+  <header class="cover">
+    <div class="cover-stamp">
+      <span class="stamp-no">No. 001</span>
+      <h1>Internship Logbook</h1>
+      <p class="cover-sub" id="coverSubtitle">Daily activity record</p>
+    </div>
+    <div class="cover-actions">
+      <span class="sync-indicator" id="syncIndicator">● read-only</span>
+      <button class="btn btn-ghost" id="signInBtn" type="button">Sign in to edit</button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- Left: profile / ID stub -->
+    <aside class="stub">
+      <div class="stub-card">
+        <p class="stub-label">Intern</p>
+        <p class="stub-value" id="stubName">—</p>
+
+        <p class="stub-label">Company</p>
+        <p class="stub-value" id="stubCompany">—</p>
+
+        <p class="stub-label">Started</p>
+        <p class="stub-value" id="stubStart">—</p>
+
+        <p class="stub-label">Off day</p>
+        <p class="stub-value" id="stubOffDay">—</p>
+
+        <button class="btn btn-outline stub-edit" id="editProfileBtn" type="button">Edit details</button>
+      </div>
+
+      <div class="stub-card stub-stats">
+        <p class="stub-label">Entries logged</p>
+        <p class="stub-value stub-big" id="statCount">0</p>
+        <p class="stub-label">Current week</p>
+        <p class="stub-value stub-big" id="statWeek">—</p>
+      </div>
+    </aside>
+
+    <!-- Right: form + table -->
+    <main class="main">
+
+      <section class="entry-form">
+        <div class="field-row">
+          <label class="field">
+            <span>Date</span>
+            <input type="date" id="entryDate">
+          </label>
+          <div class="field field-readout">
+            <span>Day / Week</span>
+            <span class="readout" id="dayWeekReadout">—</span>
+          </div>
+        </div>
+        <label class="field field-notes">
+          <span>What did you do today?</span>
+          <textarea id="entryNotes" rows="4" placeholder="Log today's tasks, learnings, meetings…"></textarea>
+        </label>
+        <div class="field-row field-row-end">
+          <span class="save-status" id="saveStatus"></span>
+          <button class="btn btn-primary" id="saveEntryBtn" type="button">Save entry</button>
+        </div>
+      </section>
+
+      <section class="log-section">
+        <div class="log-header">
+          <h2>Log</h2>
+          <div class="export-row">
+            <button class="btn btn-outline" data-export="csv">Export CSV</button>
+            <button class="btn btn-outline" data-export="xlsx">Export XLSX</button>
+            <button class="btn btn-outline" data-export="pdf">Export PDF</button>
+            <button class="btn btn-outline" data-export="png">Export image</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="logTable">
+            <thead>
+              <tr>
+                <th class="col-date">Date</th>
+                <th class="col-day">Day</th>
+                <th class="col-week">Week</th>
+                <th class="col-notes">Notes</th>
+                <th class="col-actions"></th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody">
+              <tr class="empty-row"><td colspan="5">No entries yet — log your first day above.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="page-footer">
+    <p>Data lives in <code>data.json</code> in this repository. Anyone with the link can view; only a signed-in owner can save.</p>
+  </footer>
+</div>
+
+<!-- Sign-in modal -->
+<div class="modal-backdrop" id="signInModal" hidden>
+  <div class="modal">
+    <h3>Sign in to edit</h3>
+    <p>Paste a GitHub personal access token scoped to <strong>this repo only</strong>, with <em>Contents: Read and write</em> permission. It's stored only in this browser (localStorage) and is never uploaded anywhere else.</p>
+    <input type="password" id="tokenInput" placeholder="github_pat_…">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelSignIn" type="button">Cancel</button>
+      <button class="btn btn-primary" id="confirmSignIn" type="button">Save token</button>
+    </div>
+    <button class="link-btn" id="signOutBtn" type="button" hidden>Sign out / remove saved token</button>
+  </div>
+</div>
+
+<!-- Profile modal -->
+<div class="modal-backdrop" id="profileModal" hidden>
+  <div class="modal">
+    <h3>Your details</h3>
+    <label class="field"><span>Name</span><input type="text" id="profileName"></label>
+    <label class="field"><span>Company / department</span><input type="text" id="profileCompany"></label>
+    <label class="field"><span>Internship start date</span><input type="date" id="profileStart"></label>
+    <label class="field">
+      <span>Off day</span>
+      <select id="profileOffDay">
+        <option>Sunday</option><option>Monday</option><option>Tuesday</option>
+        <option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
+      </select>
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelProfile" type="button">Cancel</button>
+      <button class="btn btn-primary" id="saveProfileBtn" type="button">Save details</button>
+    </div>
+  </div>
+</div>
+
+<!-- CDN libraries for export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
