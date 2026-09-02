@@ -15,19 +15,17 @@ const FULL_DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Frid
    profile = {
      name, company,
      startDate, endDate,                 // work period (YYYY-MM-DD)
-     offDays: [ { day:'Saturday', half:false, start:'' },
-                { day:'Friday',   half:true,  start:'13:00' } ]
+     offPeriods: [                        // off-day schedules, each optionally date-bounded
+       { from:'', to:'2026-08-31', days:[ {day:'Saturday',half:true,start:'14:00',end:''},
+                                          {day:'Sunday',  half:false} ] },
+       { from:'2026-09-01', to:'', days:[ {day:'Friday',  half:false},
+                                          {day:'Saturday',half:true,start:'09:00',end:'13:00'} ] }
+     ]
    }
-   Older data.json files that used a single `offDay` string are upgraded. */
-function normalizeProfile(p){
-  const prof = Object.assign(
-    { name:"", company:"", startDate:"", endDate:"", offDays:[] },
-    p || {}
-  );
-  if((!prof.offDays || !prof.offDays.length) && p && p.offDay){
-    prof.offDays = [{ day: p.offDay, half:false, start:"" }];
-  }
-  prof.offDays = (prof.offDays || [])
+   Empty `from` = from the internship start; empty `to` = open-ended.
+   Older data.json files (single `offDay` string, or a flat `offDays` array) are upgraded. */
+function normalizeDays(arr){
+  return (arr || [])
     .filter(o => o && WEEKDAYS.includes(o.day))
     .map(o => ({
       day: o.day,
@@ -35,7 +33,26 @@ function normalizeProfile(p){
       start: o.half ? (o.start || "") : "",
       end: o.half ? (o.end || "") : ""
     }));
+}
+function normalizeProfile(p){
+  const prof = Object.assign(
+    { name:"", company:"", startDate:"", endDate:"", offPeriods:[] },
+    p || {}
+  );
+  if((!prof.offPeriods || !prof.offPeriods.length) && p){
+    if(Array.isArray(p.offDays) && p.offDays.length){
+      prof.offPeriods = [{ from:"", to:"", days: p.offDays }];
+    }else if(p.offDay){
+      prof.offPeriods = [{ from:"", to:"", days:[{ day:p.offDay, half:false }] }];
+    }
+  }
+  prof.offPeriods = (prof.offPeriods || []).map(period => ({
+    from: period.from || "",
+    to: period.to || "",
+    days: normalizeDays(period.days)
+  }));
   delete prof.offDay;
+  delete prof.offDays;
   return prof;
 }
 
@@ -47,17 +64,47 @@ function offDayRange(o){
   return "";
 }
 
+function periodMatches(period, dateStr){
+  const from = period.from || "0000-01-01";
+  const to = period.to || "9999-12-31";
+  return dateStr >= from && dateStr <= to;
+}
+
 function offDayInfo(dateStr){
   if(!dateStr) return null;
   const name = FULL_DAY_NAMES[toLocalDate(dateStr).getDay()];
-  return state.profile.offDays.find(o => o.day === name) || null;
+  for(const period of state.profile.offPeriods){
+    if(!periodMatches(period, dateStr)) continue;
+    return period.days.find(o => o.day === name) || null;
+  }
+  return null;
 }
 
-function offDaySummary(){
-  if(!state.profile.offDays.length) return "—";
-  return state.profile.offDays
+function shortDate(str){
+  if(!str) return "";
+  const d = toLocalDate(str);
+  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+}
+function periodLabel(period){
+  if(period.from && period.to) return `${shortDate(period.from)}–${shortDate(period.to)}`;
+  if(period.from) return `from ${shortDate(period.from)}`;
+  if(period.to) return `until ${shortDate(period.to)}`;
+  return "";
+}
+function daysSummary(days){
+  if(!days.length) return "none";
+  return days
     .map(o => o.half ? `${o.day.slice(0,3)} ½${offDayRange(o) ? " " + offDayRange(o) : ""}` : o.day.slice(0,3))
     .join(", ");
+}
+function offDaySummary(){
+  const periods = state.profile.offPeriods;
+  if(!periods.length) return "—";
+  if(periods.length === 1 && !periods[0].from && !periods[0].to) return daysSummary(periods[0].days);
+  return periods.map(p => {
+    const label = periodLabel(p);
+    return label ? `${label}: ${daysSummary(p.days)}` : daysSummary(p.days);
+  }).join("  ·  ");
 }
 
 function periodSummary(){
@@ -298,60 +345,89 @@ function openSignInModal(){
 function closeSignInModal(){ document.getElementById("signInModal").hidden = true; }
 
 /* ---------- profile modal ---------- */
+let periodDraft = [];
+
 function openProfileModal(){
   document.getElementById("profileName").value = state.profile.name || "";
   document.getElementById("profileCompany").value = state.profile.company || "";
   document.getElementById("profileStart").value = state.profile.startDate || "";
   document.getElementById("profileEnd").value = state.profile.endDate || "";
-  buildOffDayControls();
+  periodDraft = state.profile.offPeriods.length
+    ? JSON.parse(JSON.stringify(state.profile.offPeriods))
+    : [{ from:"", to:"", days:[] }];
+  renderOffPeriods();
   document.getElementById("profileModal").hidden = false;
 }
 function closeProfileModal(){ document.getElementById("profileModal").hidden = true; }
 
-function buildOffDayControls(){
-  const wrap = document.getElementById("offDayList");
-  wrap.innerHTML = WEEKDAYS.map(day => {
-    const cur = state.profile.offDays.find(o => o.day === day);
-    const on = !!cur;
-    const half = on && cur.half;
-    return `
-      <div class="offday-row" data-day="${day}">
-        <label class="offday-check">
-          <input type="checkbox" class="offday-toggle" ${on ? "checked" : ""}>
-          <span>${day}</span>
-        </label>
-        <select class="offday-type" ${on ? "" : "disabled"}>
-          <option value="full" ${half ? "" : "selected"}>Full day</option>
-          <option value="half" ${half ? "selected" : ""}>Half day</option>
-        </select>
-        <span class="offday-times" ${on && half ? "" : "hidden"}>
-          <input type="time" class="offday-start" value="${cur ? cur.start : ""}" ${on && half ? "" : "disabled"}>
-          <span class="offday-dash">–</span>
-          <input type="time" class="offday-end" value="${cur ? cur.end : ""}" ${on && half ? "" : "disabled"}>
-        </span>
-      </div>`;
-  }).join("");
+function offDayRowHtml(day, cur){
+  const on = !!cur;
+  const half = on && cur.half;
+  return `
+    <div class="offday-row" data-day="${day}">
+      <label class="offday-check">
+        <input type="checkbox" class="offday-toggle" ${on ? "checked" : ""}>
+        <span>${day}</span>
+      </label>
+      <select class="offday-type" ${on ? "" : "disabled"}>
+        <option value="full" ${half ? "" : "selected"}>Full day</option>
+        <option value="half" ${half ? "selected" : ""}>Half day</option>
+      </select>
+      <span class="offday-times" ${on && half ? "" : "hidden"}>
+        <input type="time" class="offday-start" value="${cur ? cur.start : ""}" ${on && half ? "" : "disabled"}>
+        <span class="offday-dash">–</span>
+        <input type="time" class="offday-end" value="${cur ? cur.end : ""}" ${on && half ? "" : "disabled"}>
+      </span>
+    </div>`;
+}
 
-  wrap.querySelectorAll(".offday-row").forEach(row => {
-    const cb = row.querySelector(".offday-toggle");
-    const type = row.querySelector(".offday-type");
-    const times = row.querySelector(".offday-times");
-    const timeInputs = row.querySelectorAll(".offday-start, .offday-end");
-    const sync = () => {
-      const half = type.value === "half";
-      const showTimes = cb.checked && half;
-      type.disabled = !cb.checked;
-      times.hidden = !showTimes;
-      timeInputs.forEach(i => { i.disabled = !showTimes; });
-    };
-    cb.addEventListener("change", sync);
-    type.addEventListener("change", sync);
+function renderOffPeriods(){
+  const wrap = document.getElementById("offPeriods");
+  const multi = periodDraft.length > 1;
+  wrap.innerHTML = periodDraft.map((period, idx) => `
+    <div class="off-period" data-idx="${idx}">
+      <div class="off-period-head">
+        <label>From <input type="date" class="op-from" value="${period.from}"></label>
+        <label>to <input type="date" class="op-to" value="${period.to}"></label>
+        ${multi ? `<button type="button" class="link-btn op-remove">remove</button>` : ""}
+      </div>
+      <div class="offday-list">
+        ${WEEKDAYS.map(day => offDayRowHtml(day, period.days.find(o => o.day === day))).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  wrap.querySelectorAll(".off-period").forEach(block => {
+    block.querySelectorAll(".offday-row").forEach(row => {
+      const cb = row.querySelector(".offday-toggle");
+      const type = row.querySelector(".offday-type");
+      const times = row.querySelector(".offday-times");
+      const timeInputs = row.querySelectorAll(".offday-start, .offday-end");
+      const sync = () => {
+        const half = type.value === "half";
+        const showTimes = cb.checked && half;
+        type.disabled = !cb.checked;
+        times.hidden = !showTimes;
+        timeInputs.forEach(i => { i.disabled = !showTimes; });
+      };
+      cb.addEventListener("change", sync);
+      type.addEventListener("change", sync);
+    });
+    const remove = block.querySelector(".op-remove");
+    if(remove){
+      remove.addEventListener("click", () => {
+        snapshotPeriods();
+        periodDraft.splice(Number(block.dataset.idx), 1);
+        if(!periodDraft.length) periodDraft = [{ from:"", to:"", days:[] }];
+        renderOffPeriods();
+      });
+    }
   });
 }
 
-function collectOffDays(){
+function collectDaysFrom(block){
   const out = [];
-  document.querySelectorAll("#offDayList .offday-row").forEach(row => {
+  block.querySelectorAll(".offday-row").forEach(row => {
     if(!row.querySelector(".offday-toggle").checked) return;
     const half = row.querySelector(".offday-type").value === "half";
     out.push({
@@ -364,6 +440,14 @@ function collectOffDays(){
   return out;
 }
 
+function snapshotPeriods(){
+  periodDraft = [...document.querySelectorAll("#offPeriods .off-period")].map(block => ({
+    from: block.querySelector(".op-from").value,
+    to: block.querySelector(".op-to").value,
+    days: collectDaysFrom(block)
+  }));
+}
+
 async function saveProfile(){
   const start = document.getElementById("profileStart").value;
   const end = document.getElementById("profileEnd").value;
@@ -371,12 +455,20 @@ async function saveProfile(){
     showSaveStatus("Work period end can't be before the start.", true);
     return;
   }
+  snapshotPeriods();
+  const periods = periodDraft.filter(p => p.days.length || p.from || p.to);
+  for(const p of periods){
+    if(p.from && p.to && p.to < p.from){
+      showSaveStatus("An off-day schedule has its end date before its start date.", true);
+      return;
+    }
+  }
   state.profile = normalizeProfile({
     name: document.getElementById("profileName").value.trim(),
     company: document.getElementById("profileCompany").value.trim(),
     startDate: start,
     endDate: end,
-    offDays: collectOffDays()
+    offPeriods: periods
   });
   try{
     await persist();
@@ -488,6 +580,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("editProfileBtn").addEventListener("click", openProfileModal);
   document.getElementById("cancelProfile").addEventListener("click", closeProfileModal);
   document.getElementById("saveProfileBtn").addEventListener("click", saveProfile);
+  document.getElementById("addPeriodBtn").addEventListener("click", () => {
+    snapshotPeriods();
+    periodDraft.push({ from:"", to:"", days:[] });
+    renderOffPeriods();
+  });
 
   document.querySelectorAll("[data-export]").forEach(btn => {
     btn.addEventListener("click", () => {

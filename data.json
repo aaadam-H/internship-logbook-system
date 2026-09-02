@@ -4,18 +4,38 @@
     "company": "Reino Creative Group",
     "startDate": "2026-07-20",
     "endDate": "2026-09-27",
-    "offDays": [
+    "offPeriods": [
       {
-        "day": "Friday",
-        "half": false,
-        "start": "",
-        "end": ""
+        "from": "",
+        "to": "2026-08-31",
+        "days": [
+          {
+            "day": "Saturday",
+            "half": true,
+            "start": "14:00",
+            "end": ""
+          },
+          {
+            "day": "Sunday",
+            "half": false
+          }
+        ]
       },
       {
-        "day": "Saturday",
-        "half": true,
-        "start": "09:00",
-        "end": "13:00"
+        "from": "2026-09-01",
+        "to": "",
+        "days": [
+          {
+            "day": "Friday",
+            "half": false
+          },
+          {
+            "day": "Saturday",
+            "half": true,
+            "start": "09:00",
+            "end": "13:00"
+          }
+        ]
       }
     ]
   },

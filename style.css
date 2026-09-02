@@ -268,6 +268,12 @@ tr:hover td{ background: rgba(169,117,47,0.08); }
 .offday-times{ display:inline-flex; align-items:center; gap:4px; flex:1 1 100%; }
 .offday-times[hidden]{ display:none; }
 .offday-dash{ color:var(--ink-soft); }
+.off-period{ border:1px solid var(--rule-light); border-radius:var(--radius); padding:10px 10px 4px; margin-bottom:10px; }
+.off-period-head{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin-bottom:8px; font-size:12px; color:var(--ink-soft); }
+.off-period-head label{ display:flex; align-items:center; gap:5px; }
+.off-period-head input[type="date"]{ width:auto; margin:0; font-size:12px; padding:5px 7px; }
+.off-period-head .op-remove{ margin:0 0 0 auto; }
+#addPeriodBtn{ margin-bottom:14px; }
 .off-tag{
   display:inline-block; margin-left:6px; font-size:10px; line-height:1.4;
   padding:0 5px; border:1px solid var(--brass-dark); color:var(--brass-dark);

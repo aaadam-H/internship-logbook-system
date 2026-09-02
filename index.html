@@ -139,8 +139,9 @@
       <label class="field"><span>Work period — start</span><input type="date" id="profileStart"></label>
       <label class="field"><span>Work period — end</span><input type="date" id="profileEnd"></label>
     </div>
-    <span class="field-label">Off days <small>(tick each rest day; use “Half day” + a time range, e.g. 09:00–13:00, for a 1½-day weekend)</small></span>
-    <div id="offDayList" class="offday-list"></div>
+    <span class="field-label">Off days <small>(one schedule block per stretch of the internship; leave both dates blank if it never changes. If blocks overlap, the first one wins. Half day = tick “Half day” and give the off hours, e.g. 09:00–13:00, or just a start for “from 14:00 onward”.)</small></span>
+    <div id="offPeriods"></div>
+    <button class="btn btn-outline" id="addPeriodBtn" type="button">+ Add another schedule</button>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="cancelProfile" type="button">Cancel</button>
       <button class="btn btn-primary" id="saveProfileBtn" type="button">Save details</button>
