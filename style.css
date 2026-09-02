@@ -265,7 +265,9 @@ tr:hover td{ background: rgba(169,117,47,0.08); }
 .offday-row input[type="time"]{ width:auto; margin:0; font-size:13px; padding:6px 8px; }
 .offday-row select:disabled,
 .offday-row input:disabled{ opacity:.45; }
-.offday-time[hidden]{ display:none; }
+.offday-times{ display:inline-flex; align-items:center; gap:4px; flex:1 1 100%; }
+.offday-times[hidden]{ display:none; }
+.offday-dash{ color:var(--ink-soft); }
 .off-tag{
   display:inline-block; margin-left:6px; font-size:10px; line-height:1.4;
   padding:0 5px; border:1px solid var(--brass-dark); color:var(--brass-dark);

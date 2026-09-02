@@ -29,9 +29,22 @@ function normalizeProfile(p){
   }
   prof.offDays = (prof.offDays || [])
     .filter(o => o && WEEKDAYS.includes(o.day))
-    .map(o => ({ day:o.day, half:!!o.half, start: o.half ? (o.start || "") : "" }));
+    .map(o => ({
+      day: o.day,
+      half: !!o.half,
+      start: o.half ? (o.start || "") : "",
+      end: o.half ? (o.end || "") : ""
+    }));
   delete prof.offDay;
   return prof;
+}
+
+function offDayRange(o){
+  if(!o || !o.half) return "";
+  if(o.start && o.end) return `${o.start}–${o.end}`;
+  if(o.start) return `from ${o.start}`;
+  if(o.end) return `until ${o.end}`;
+  return "";
 }
 
 function offDayInfo(dateStr){
@@ -43,7 +56,7 @@ function offDayInfo(dateStr){
 function offDaySummary(){
   if(!state.profile.offDays.length) return "—";
   return state.profile.offDays
-    .map(o => o.half ? `${o.day.slice(0,3)} ½${o.start ? " from " + o.start : ""}` : o.day.slice(0,3))
+    .map(o => o.half ? `${o.day.slice(0,3)} ½${offDayRange(o) ? " " + offDayRange(o) : ""}` : o.day.slice(0,3))
     .join(", ");
 }
 
@@ -196,7 +209,7 @@ function renderTable(){
 function offTag(dateStr){
   const off = offDayInfo(dateStr);
   if(!off) return "";
-  const label = off.half ? `½ off${off.start ? " · from " + off.start : ""}` : "off day";
+  const label = off.half ? `½ off${offDayRange(off) ? " · " + offDayRange(off) : ""}` : "off day";
   return ` <span class="off-tag">${label}</span>`;
 }
 
@@ -236,7 +249,7 @@ function updateDayWeekReadout(){
   if(state.profile.startDate && date < state.profile.startDate) txt = `${dayName(date)} · before start`;
   else if(state.profile.endDate && date > state.profile.endDate) txt = `${dayName(date)} · after end`;
   const off = offDayInfo(date);
-  if(off) txt += off.half ? `  ·  ½ off day${off.start ? " (from " + off.start + ")" : ""}` : "  ·  off day";
+  if(off) txt += off.half ? `  ·  ½ off day${offDayRange(off) ? " (" + offDayRange(off) + ")" : ""}` : "  ·  off day";
   el.textContent = txt;
 }
 
@@ -311,20 +324,25 @@ function buildOffDayControls(){
           <option value="full" ${half ? "" : "selected"}>Full day</option>
           <option value="half" ${half ? "selected" : ""}>Half day</option>
         </select>
-        <input type="time" class="offday-time" value="${cur ? cur.start : ""}"
-               ${on && half ? "" : "hidden"} ${on && half ? "" : "disabled"}>
+        <span class="offday-times" ${on && half ? "" : "hidden"}>
+          <input type="time" class="offday-start" value="${cur ? cur.start : ""}" ${on && half ? "" : "disabled"}>
+          <span class="offday-dash">–</span>
+          <input type="time" class="offday-end" value="${cur ? cur.end : ""}" ${on && half ? "" : "disabled"}>
+        </span>
       </div>`;
   }).join("");
 
   wrap.querySelectorAll(".offday-row").forEach(row => {
     const cb = row.querySelector(".offday-toggle");
     const type = row.querySelector(".offday-type");
-    const time = row.querySelector(".offday-time");
+    const times = row.querySelector(".offday-times");
+    const timeInputs = row.querySelectorAll(".offday-start, .offday-end");
     const sync = () => {
       const half = type.value === "half";
+      const showTimes = cb.checked && half;
       type.disabled = !cb.checked;
-      time.disabled = !(cb.checked && half);
-      time.hidden = !(cb.checked && half);
+      times.hidden = !showTimes;
+      timeInputs.forEach(i => { i.disabled = !showTimes; });
     };
     cb.addEventListener("change", sync);
     type.addEventListener("change", sync);
@@ -339,7 +357,8 @@ function collectOffDays(){
     out.push({
       day: row.dataset.day,
       half,
-      start: half ? row.querySelector(".offday-time").value : ""
+      start: half ? row.querySelector(".offday-start").value : "",
+      end: half ? row.querySelector(".offday-end").value : ""
     });
   });
   return out;
