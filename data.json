@@ -8,12 +8,14 @@
       {
         "day": "Friday",
         "half": false,
-        "start": ""
+        "start": "",
+        "end": ""
       },
       {
         "day": "Saturday",
         "half": true,
-        "start": "09:00"
+        "start": "09:00",
+        "end": "13:00"
       }
     ]
   },
