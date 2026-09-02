@@ -232,6 +232,7 @@ tr:hover td{ background: rgba(169,117,47,0.08); }
   position:fixed; inset:0; background:rgba(36,49,61,0.55);
   display:flex; align-items:center; justify-content:center; padding:20px; z-index:50;
 }
+.modal-backdrop[hidden]{ display:none; }
 .modal{
   background:var(--paper-light);
   border:1px solid var(--rule);
