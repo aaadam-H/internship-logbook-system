@@ -6,9 +6,14 @@
     "endDate": "",
     "offDays": [
       {
-        "day": "Sunday",
+        "day": "Friday",
         "half": false,
         "start": ""
+      },
+      {
+        "day": "Saturday",
+        "half": true,
+        "start": "18:00"
       }
     ]
   },
