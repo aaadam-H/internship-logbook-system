@@ -37,10 +37,10 @@
         <p class="stub-label">Company</p>
         <p class="stub-value" id="stubCompany">—</p>
 
-        <p class="stub-label">Started</p>
-        <p class="stub-value" id="stubStart">—</p>
+        <p class="stub-label">Work period</p>
+        <p class="stub-value" id="stubPeriod">—</p>
 
-        <p class="stub-label">Off day</p>
+        <p class="stub-label">Off days</p>
         <p class="stub-value" id="stubOffDay">—</p>
 
         <button class="btn btn-outline stub-edit" id="editProfileBtn" type="button">Edit details</button>
@@ -135,14 +135,12 @@
     <h3>Your details</h3>
     <label class="field"><span>Name</span><input type="text" id="profileName"></label>
     <label class="field"><span>Company / department</span><input type="text" id="profileCompany"></label>
-    <label class="field"><span>Internship start date</span><input type="date" id="profileStart"></label>
-    <label class="field">
-      <span>Off day</span>
-      <select id="profileOffDay">
-        <option>Sunday</option><option>Monday</option><option>Tuesday</option>
-        <option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
-      </select>
-    </label>
+    <div class="field-row">
+      <label class="field"><span>Work period — start</span><input type="date" id="profileStart"></label>
+      <label class="field"><span>Work period — end</span><input type="date" id="profileEnd"></label>
+    </div>
+    <span class="field-label">Off days <small>(tick each rest day; use “Half day” + a time for a 1½-day weekend)</small></span>
+    <div id="offDayList" class="offday-list"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="cancelProfile" type="button">Cancel</button>
       <button class="btn btn-primary" id="saveProfileBtn" type="button">Save details</button>

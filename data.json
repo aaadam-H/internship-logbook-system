@@ -3,7 +3,107 @@
     "name": "Adam Hakimi",
     "company": "Reino Creative Group",
     "startDate": "2026-07-20",
-    "offDay": "Sunday"
+    "endDate": "",
+    "offDays": [
+      {
+        "day": "Sunday",
+        "half": false,
+        "start": ""
+      }
+    ]
   },
-  "entries": []
+  "entries": [
+    {
+      "date": "2026-07-20",
+      "notes": "20-21 Jul 2026 - Onboarding, Orientation & Infrastructure Overview (IT)\n\nBriefings & instructions received:\n- Company introduction & HRMS setup: completed HR orientation and configured the company HRMS account for attendance and workflow.\n- Attended initial briefing with the Company Director, IT Executive and Operations Manager.\n- System architecture briefing: technical overview of Reino Creative Group's proprietary software platforms and systems.\n\nWorks observed:\n- Deployment pipelines: watched the IT Executive manage and monitor live CI/CD deployments across company platforms.\n- Server maintenance & patching: live troubleshooting, error logging and emergency hotfix patching on the official company website.\n- Cloud infrastructure: IT Executive accessing the company VPS via SSH and managing production databases.\n\nReflection & technical application:\n- Granted initial server access credentials with safety protocols explained around environment variables and secure access privileges."
+    },
+    {
+      "date": "2026-07-22",
+      "notes": "22-25 Jul 2026 - Digitalised Kid's Dictionary Project: Architecture & UI/UX Development (IT)\n\nWorks carried out:\n- Requirement gathering & brainstorming: assigned to build a digitalised Kid's Dictionary inspired by \"Kamus Adik\"; mapped core architecture and the user journey (Landing -> Avatar selection -> Topic selection -> Content access / paywall).\n- Content page development: built the primary content page structure and layout for dictionary entries.\n- Authentication & access control: developed the initial login interface with Role-Based Access Control (RBAC) for Standard Users vs Admins.\n- Paywall integration logic: implemented checks that lock specific topics based on subscription/payment status.\n\nFeedback & iterative improvements:\n- Presented progress to the Operations Manager and received targeted feedback.\n- Refactored UI layouts for a more engaging kids' experience and streamlined backend navigation logic.\n\nTheoretical / technical linkage:\n- Applied RBAC, state management for paywall routing, and responsive frontend UI/UX patterns."
+    },
+    {
+      "date": "2026-07-26",
+      "notes": "26-27 Jul 2026 - Kid's Dictionary: Feature Development & UX Testing (IT)\n\nWorks carried out:\n- Landing page redesign: fantasy-world / cloud-portal theme with updated mascot artwork.\n- Redesigned the drag-and-drop learning component.\n- Rebuilt the header with the Reino Education logo, branding and a sound toggle.\n- Background audio system with mute/unmute; disabled on admin-only pages.\n- Loading spinner shown while a topic's images are still downloading.\n- Database foundation (MySQL): initial schema for real parent accounts, replacing hardcoded credentials.\n- Persistent learning progress stored in the DB so it survives logout, refresh and device changes.\n- \"Dah Belajar\" badge on topic cards at 100% completion.\n- Entitlement-based access system: admins manually grant/revoke access to paid topics (interim before the payment gateway).\n- Child profiles: parents create and name multiple child profiles; profile selection required at every login.\n- Header personalisation: shows the current child profile's name.\n- account.php: \"Pakej Yang Dimiliki\" updated to reflect free and granted-access topics.\n- Admin image editor built into the admin panel for pre-upload editing.\n- New content page for the \"Opposite Words\" topic.\n\nFeedback & iterative improvements:\n- Ran real user testing and gathered UX feedback for refinement.\n\nTheoretical / technical linkage:\n- Database normalisation and relational schema design (MySQL) to move from hardcoded to persistent data.\n- Session/profile-state management for multiple child profiles per account.\n- Asynchronous loading patterns (spinners) for smoother perceived performance."
+    },
+    {
+      "date": "2026-07-28",
+      "notes": "28-30 Jul 2026 - Technical Research, Payment Gateway, Deployment & Photo Training (IT)\n\nWorks carried out:\n- CSS keyframe animation research: how @keyframes can animate images/illustrations in the UI.\n- Hough Circle Detection research: studied the Hough Circle Transform (OpenCV) as a potential computer-vision technique.\n- Payment gateway research: evaluated the CHIP payment gateway as the intended replacement for the manual entitlement system.\n- Deployment & troubleshooting: assisted with deployment prep; fixed a server caching issue using timestamp-based file versioning; helped troubleshoot a faulty PC.\n\nObserved / learned:\n- Passport photo service training: camera, editing software and equipment for customer passport photo orders.\n\nFeedback & iterative improvements:\n- Implemented website improvements based on Company Director feedback.\n\nTheoretical / technical linkage:\n- CSS @keyframes define intermediate steps between a start and end style.\n- The Hough Circle Transform maps edge points into a parameter space to find circle centres and radii.\n- Payment gateway flow: checkout initiation -> API call -> confirmation webhook -> entitlement update.\n- Cache-busting: timestamp/version parameters force clients to fetch updated files after deployment."
+    },
+    {
+      "date": "2026-07-31",
+      "notes": "31 Jul - 1 Aug 2026 - Cross-Departmental Exposure & Production Dept. Support (IT / Production)\n\nWorks carried out:\n- Assisted the production department with banner printing and DTF (Direct-to-Film) printing.\n\nObserved / learned:\n- Learned about solvent printing.\n- Observed the heat press process for transferring designs onto shirts.\n- Observed the laser cutting process."
+    },
+    {
+      "date": "2026-08-03",
+      "notes": "3-4 Aug 2026 - Server Access, Kamus Reino Live Testing & majliskahwin.com Handover (IT)\n\nWorks carried out:\n- Server & database access: given access to another server and database to deploy a project.\n- Source code review: went through the Reino Education website's source code.\n- Kamus Reino live testing: tested reinoeducation.com/kamusreino, including reset-password and the admin user management page (admin_users.php).\n- New project handover: assigned to take over majliskahwin.com.\n- Competitor & design research: studied other digital wedding-card websites and Apple's website for design inspiration.\n- Design proposal: proposed a new design and functionality set for majliskahwin.com.\n\nTheoretical / technical linkage:\n- Reviewing an existing codebase before changing it maps data flow and conventions first.\n- Admin-managed password resets and user management are common RBAC-adjacent account-recovery features."
+    },
+    {
+      "date": "2026-08-05",
+      "notes": "5 Aug 2026 - majliskahwin.com: Reviews, Order Tracking & Paywall Logic (IT)\n\nWorks carried out:\n- Customer review system: review page with optional photo upload; admin accept/decline; accepted reviews show on the homepage. Public view at ulasan.php, admin moderation at admin/reviews.php.\n- Order record page: /rekod updated with tracking numbers and tidied action buttons.\n- Watermark paywall: unpaid digital cards are watermarked; watermark removed once payment is confirmed (previously accessible without paying).\n- Conditional UI buttons: Copy Link / Copywriting / RSVP / Guestbook disabled while unpaid; Pay Now / Delete disabled once paid.\n- Edit flow cleanup: removed the confusing payment option from the edit screen.\n\nObserved / learned:\n- Learned another printing setup for producing smaller banners."
+    },
+    {
+      "date": "2026-08-06",
+      "notes": "6 Aug 2026 - majliskahwin.com: Review Workflow, Order Status Sync & CSRF Research (IT)\n\nWorks carried out:\n- Review mechanism overhaul: customer must order and pay before reviewing (1 order = 1 review); name and partner's name auto-fill from the order; editing a review resets it to pending for admin re-review.\n- Order completion estimate added on the /rekod order page.\n- Database query optimisation for performance.\n- Fulfilment method field (pickup vs postage) added to admin/order-view.php.\n- Print-lock status: \"Sudah Dicetak\" locks editing of the physical product once printed.\n- Card link auto-regeneration: the card hashtag/link now regenerates live when the couple's name changes instead of sticking to the old name.\n- Order status sync: normalised inconsistent statuses to pending_payment / paid / abandoned, added status colours and auto filter/search.\n- Admin notification badge for pending reviews.\n- UI modernisation: replaced alert()/confirm() dialogs with toast notifications and modals.\n- Fixed index.php showing outdated homepage images despite updated files on the server.\n\nTheoretical / technical linkage:\n- CSRF (Cross-Site Request Forgery): an attacker tricks a logged-in user's browser into sending an unwanted request, abusing the session cookie sent automatically.\n- Standard mitigation: a per-session/per-form CSRF token validated server-side, paired with SameSite cookies."
+    },
+    {
+      "date": "2026-08-07",
+      "notes": "7-8 Aug 2026 - Production Dept. Support: E-Commerce Materials & Customer Banner (Production)\n\nWorks carried out:\n- Helped the production department produce e-commerce materials and a customer banner using the appropriate equipment."
+    },
+    {
+      "date": "2026-08-10",
+      "notes": "10-11 Aug 2026 - majliskahwin.com: Performance Testing & Bug Fixes (IT)\n\nWorks carried out:\n- Performance testing: tested majliskahwin.com's performance and identified a number of bugs.\n- Bug fixes: fixed the issues found during testing.\n\nTheoretical / technical linkage:\n- Performance testing before the planned Laravel migration catches issues while they are still cheap to fix.\n- Fixing issues as found also builds a running list of known trouble spots to re-check after the move to Laravel."
+    },
+    {
+      "date": "2026-08-12",
+      "notes": "12 Aug 2026 - IT Department Meeting: Server Utilisation & Laravel Proposal (IT)\n\nWorks carried out:\n- Department meeting on a spike in server utilisation.\n- Contingency planning: discussed the need for a contingency plan and started the next SOP for handling such situations.\n- Laravel proposal: proposed adopting the Laravel framework as part of the contingency/future system plan.\n\nTheoretical / technical linkage:\n- A utilisation spike needs both an immediate contingency response and a longer-term SOP to prevent recurrence.\n- Framework migration proposals are easier to justify when tied to a concrete incident rather than proposed in the abstract."
+    },
+    {
+      "date": "2026-08-13",
+      "notes": "13 Aug 2026 - Laravel Introduction Presentation & Inventory System Kick-Off (IT)\n\nWorks carried out:\n- Gave an introduction presentation on Laravel to the IT department.\n- Department decision: based on the briefing, IT decided to move forward with Laravel for future systems.\n- New project: started building a new Inventory Management System using Laravel.\n\nTheoretical / technical linkage:\n- Laravel's MVC structure, Eloquent ORM and tooling ecosystem were the key points supporting the proposal.\n\nLaravel overview (from the presentation deck):\n- Artisan CLI commands (make:controller, migrate, test) replace slow manual steps; they run in development, not on the live site.\n- MVC separates concerns: Model = data/DB logic, Controller = requests, View = display, so a fix in one layer doesn't risk the others.\n- Migration needs server support for SSH, Composer and Node.js, and dependencies need periodic updates for security and compatibility."
+    },
+    {
+      "date": "2026-08-14",
+      "notes": "14-15 Aug 2026 - Production & E-Commerce Dept. Support (Production)\n\nWorks carried out:\n- Helped the production and e-commerce departments with customer requests: banners, DTF prints and business cards.\n\nObserved / learned:\n- Learned to use the Lotus eco solvent printer.\n\nTheoretical / technical linkage:\n- Cross-training on production gives a practical sense of the physical side of order fulfilment that systems like majliskahwin.com must track.\n- Learning new equipment builds hands-on familiarity beyond the software side of the internship."
+    },
+    {
+      "date": "2026-08-17",
+      "notes": "17 Aug 2026 - majliskahwin.com: New Feature Assignment & Security Improvements (IT)\n\nWorks carried out:\n- Feedback & new assignment: received feedback on majliskahwin.com and was assigned to build a new \"Welcome Board\" module (guestbook + photo gallery).\n- Login rate limiting: added a rate limit on failed login attempts within a short time window.\n- Refund mechanism: added a refund mechanism, not fully automated since CHIP does not support it directly."
+    },
+    {
+      "date": "2026-08-18",
+      "notes": "18-19 Aug 2026 - Welcome Board Module & Launch Preparation (IT)\n\nWorks carried out:\n- Welcome Board module: built the feature (Physical/Digital option) into the order flow, reachable via Login > Rekod Tempahan > More > Welcome Board; customers can print or save it (manual send-to-print at Reino not yet linked).\n- Design cleanup & launch prep: tidied the design and began listing areas needing improvement before launch.\n- Landing page updated, rendered with JPG images.\n- Found a bug in the live preview feature (still in progress).\n\nTheoretical / technical linkage:\n- The Welcome Board's physical/digital split meant handling both a printable output and an in-browser live preview from the same underlying data."
+    },
+    {
+      "date": "2026-08-20",
+      "notes": "20-21 Aug 2026 - Live Preview Fix, UI Cleanup & Sales Dept. Support (IT)\n\nWorks carried out:\n- Fixed the live preview bug found the day before.\n- Continued cleaning up the ordering page UI.\n- Improved the Welcome Board UI/UX; its link is now hidden from public view unless the order is paid.\n- Added an auto-generated QR location option for the physical card.\n- Sales department support: helped handle sales and use their pipeline to keep operations running."
+    },
+    {
+      "date": "2026-08-22",
+      "notes": "22 Aug 2026 - SEO Preparation for majliskahwin.com (IT)\n\nWorks carried out:\n- SEO kickoff: started basic SEO work for majliskahwin.com.\n- Performance improvements.\n- Audited the mobile UI.\n- Reviewed Google Search Console to prepare for SEO tracking."
+    },
+    {
+      "date": "2026-08-24",
+      "notes": "24 Aug 2026 - SEO, Postage Pricing & Global Pricing Page (IT)\n\nWorks carried out:\n- SEO: added Google Analytics tracking.\n- Postage pricing: updated the postage price calculation to be weight-based.\n- Pricing page: built a page to set item prices globally."
+    },
+    {
+      "date": "2026-08-25",
+      "notes": "25-26 Aug 2026 - Mobile UI Fixes, Module Renaming & Order Tracking (IT)\n\nWorks carried out:\n- Mobile UI fix and synced the header across all pages.\n- Updated the customer email template.\n- Added an opening animation with the MK logo to the Welcome Board.\n- Module renaming: \"Welcome Board\" -> \"Guestbook\"; old \"Guestbook\" (photo wall) -> \"Wish Card\".\n- Added order tracking similar to the Reino shop system.\n- Fixed a bug with admins downloading designs.\n- Added an animation option for customers."
+    },
+    {
+      "date": "2026-08-27",
+      "notes": "27 Aug 2026 - Live Testing, Designer Accounts & Placeholder Pages (IT)\n\nWorks carried out:\n- Live testing on majliskahwin.com; found and fixed bugs.\n- Added social media links to the site footer.\n- Designer accounts: admins can create separate designer accounts with manageable permissions.\n- Placeholder pages: empty digital card / guestbook pages now show a proper design instead of plain text."
+    },
+    {
+      "date": "2026-08-28",
+      "notes": "28-29 Aug 2026 - Sales Department Support (Sales)\n\nWorks carried out:\n- Continued helping the sales department handle sales and use their pipeline to keep operations running.\n\nTheoretical / technical linkage:\n- Seeing how the sales pipeline is structured day-to-day gives context for how order and customer data should flow into systems like majliskahwin.com."
+    },
+    {
+      "date": "2026-09-01",
+      "notes": "1 Sep 2026 - majliskahwin.com Soft Launch & Final Inspection Fixes (IT)\n\nWorks carried out:\n- Soft-launched majliskahwin.com.\n- Final inspection fixes: disabled right-click image saving on product pages; allowed switching the couple's name order; matched the \"&\" symbol font to the couple's name font; fixed mismatched guestbook wording between admin and customer views; added a custom material-spec field to pricing; adjusted homepage video contrast; fixed a background image upload bug in the guestbook; added an admin remarks page for product specs; added a 1x2ft direction-sign option to the live preview.\n- Launch delay: official launch pushed to a new date after inspection."
+    },
+    {
+      "date": "2026-09-02",
+      "notes": "2 Sep 2026 - New Features & Feedback for majliskahwin.com (IT)\n\nWorks carried out:\n- Motion video ordering: added a motion video that plays before the digital card.\n- Guestbook book feature (in progress): started letting customers pick a template to have their guestbook printed physically by Reino.\n- Other fixes: made the live preview form sticky on wide screens; sorted guestbook/wish-card photos by event instead of one mixed list; fixed digital card textareas to respect line breaks; stopped background music overlapping the intro video; redesigned the expired-session (CSRF) page.\n- Received more feedback on majliskahwin.com for further improvements.\n\nTheoretical / technical linkage:\n- The new guestbook book feature needs page count, price and weight locked in at order time, so photos uploaded later don't affect an already-paid order."
+    }
+  ]
 }

@@ -252,3 +252,37 @@ tr:hover td{ background: rgba(169,117,47,0.08); }
   border-radius:var(--radius);
 }
 .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
+.modal{ max-height:90vh; overflow-y:auto; }
+
+/* ---- Off-day controls (profile modal) ---- */
+.field-label{ display:block; font-size:12px; color:var(--ink-soft); margin:2px 0 8px; }
+.field-label small{ display:block; margin-top:2px; opacity:.8; }
+.offday-list{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.offday-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.offday-check{ display:flex; align-items:center; gap:6px; flex:1 1 130px; font-size:13px; }
+.offday-check input{ width:auto; margin:0; }
+.offday-row select,
+.offday-row input[type="time"]{ width:auto; margin:0; font-size:13px; padding:6px 8px; }
+.offday-row select:disabled,
+.offday-row input:disabled{ opacity:.45; }
+.offday-time[hidden]{ display:none; }
+.off-tag{
+  display:inline-block; margin-left:6px; font-size:10px; line-height:1.4;
+  padding:0 5px; border:1px solid var(--brass-dark); color:var(--brass-dark);
+  border-radius:2px; white-space:nowrap;
+}
+
+/* ---- Small screens ---- */
+@media (max-width:600px){
+  .page{ padding:20px 14px 48px; }
+  .cover{ align-items:flex-start; }
+  .cover h1{ font-size:25px; }
+  .cover-actions{ width:100%; justify-content:space-between; }
+  .field-row{ flex-direction:column; gap:12px; }
+  .field-row.field-row-end{ flex-direction:row; justify-content:space-between; align-items:center; }
+  .btn{ padding:10px 14px; }
+  .log-header{ align-items:flex-start; }
+  .export-row{ width:100%; }
+  th, td{ font-size:12.5px; padding:8px 7px; }
+  .col-date{ width:auto; }
+}

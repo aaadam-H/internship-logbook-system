@@ -1,6 +1,6 @@
 /* ---------- state ---------- */
 const state = {
-  profile: { name: "", company: "", startDate: "", offDay: "Sunday" },
+  profile: normalizeProfile(null),
   entries: [],   // [{date:'YYYY-MM-DD', notes:'...'}]
   sha: null,     // GitHub blob sha for data.json, needed to update it
   token: localStorage.getItem("logbook_gh_token") || null
@@ -8,6 +8,50 @@ const state = {
 
 const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const WEEKDAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const FULL_DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+/* ---------- profile shape ----------
+   profile = {
+     name, company,
+     startDate, endDate,                 // work period (YYYY-MM-DD)
+     offDays: [ { day:'Saturday', half:false, start:'' },
+                { day:'Friday',   half:true,  start:'13:00' } ]
+   }
+   Older data.json files that used a single `offDay` string are upgraded. */
+function normalizeProfile(p){
+  const prof = Object.assign(
+    { name:"", company:"", startDate:"", endDate:"", offDays:[] },
+    p || {}
+  );
+  if((!prof.offDays || !prof.offDays.length) && p && p.offDay){
+    prof.offDays = [{ day: p.offDay, half:false, start:"" }];
+  }
+  prof.offDays = (prof.offDays || [])
+    .filter(o => o && WEEKDAYS.includes(o.day))
+    .map(o => ({ day:o.day, half:!!o.half, start: o.half ? (o.start || "") : "" }));
+  delete prof.offDay;
+  return prof;
+}
+
+function offDayInfo(dateStr){
+  if(!dateStr) return null;
+  const name = FULL_DAY_NAMES[toLocalDate(dateStr).getDay()];
+  return state.profile.offDays.find(o => o.day === name) || null;
+}
+
+function offDaySummary(){
+  if(!state.profile.offDays.length) return "—";
+  return state.profile.offDays
+    .map(o => o.half ? `${o.day.slice(0,3)} ½${o.start ? " from " + o.start : ""}` : o.day.slice(0,3))
+    .join(", ");
+}
+
+function periodSummary(){
+  if(!state.profile.startDate) return "—";
+  const end = state.profile.endDate ? prettyDate(state.profile.endDate) : "…";
+  return `${prettyDate(state.profile.startDate)} – ${end}`;
+}
 
 /* ---------- date helpers (all local-time, no timezone drift) ---------- */
 function todayStr(){
@@ -35,6 +79,22 @@ function weekNumber(dateStr, startStr){
   if(diffDays < 0) return "—";
   return Math.floor(diffDays/7) + 1;
 }
+function totalWeeks(startStr, endStr){
+  if(!startStr || !endStr) return null;
+  const diffDays = Math.floor((toLocalDate(endStr) - toLocalDate(startStr)) / 86400000);
+  if(diffDays < 0) return null;
+  return Math.floor(diffDays/7) + 1;
+}
+function currentWeekLabel(){
+  const p = state.profile;
+  if(!p.startDate) return "—";
+  const today = todayStr();
+  if(today < p.startDate) return "not started";
+  if(p.endDate && today > p.endDate) return "completed";
+  const wk = weekNumber(today, p.startDate);
+  const total = totalWeeks(p.startDate, p.endDate);
+  return total ? `${wk} / ${total}` : String(wk);
+}
 
 /* ---------- GitHub sync ---------- */
 const API_BASE = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${CONFIG.DATA_PATH}`;
@@ -55,7 +115,7 @@ async function loadData(){
     state.sha = json.sha;
     const decoded = decodeURIComponent(escape(atob(json.content.replace(/\n/g, ""))));
     const data = JSON.parse(decoded);
-    state.profile = Object.assign({ name:"", company:"", startDate:"", offDay:"Sunday" }, data.profile || {});
+    state.profile = normalizeProfile(data.profile);
     state.entries = data.entries || [];
   }catch(e){
     console.error(e);
@@ -102,10 +162,10 @@ function sortedEntries(order = "desc"){
 function renderProfile(){
   document.getElementById("stubName").textContent = state.profile.name || "—";
   document.getElementById("stubCompany").textContent = state.profile.company || "—";
-  document.getElementById("stubStart").textContent = state.profile.startDate ? prettyDate(state.profile.startDate) : "—";
-  document.getElementById("stubOffDay").textContent = state.profile.offDay || "—";
+  document.getElementById("stubPeriod").textContent = periodSummary();
+  document.getElementById("stubOffDay").textContent = offDaySummary();
   document.getElementById("statCount").textContent = state.entries.length;
-  document.getElementById("statWeek").textContent = weekNumber(todayStr(), state.profile.startDate);
+  document.getElementById("statWeek").textContent = currentWeekLabel();
   document.getElementById("coverSubtitle").textContent = state.profile.name
     ? `${state.profile.name}'s daily activity record`
     : "Daily activity record";
@@ -121,7 +181,7 @@ function renderTable(){
   body.innerHTML = rows.map(entry => `
     <tr data-date="${entry.date}">
       <td class="col-date">${prettyDate(entry.date)}</td>
-      <td class="col-day">${dayName(entry.date)}</td>
+      <td class="col-day">${dayName(entry.date)}${offTag(entry.date)}</td>
       <td class="col-week">${weekNumber(entry.date, state.profile.startDate)}</td>
       <td class="notes-cell">${escapeHtml(entry.notes)}</td>
       <td class="col-actions">${state.token ? `<button class="row-delete" data-date="${entry.date}">delete</button>` : ""}</td>
@@ -131,6 +191,13 @@ function renderTable(){
   body.querySelectorAll(".row-delete").forEach(btn => {
     btn.addEventListener("click", () => deleteEntry(btn.dataset.date));
   });
+}
+
+function offTag(dateStr){
+  const off = offDayInfo(dateStr);
+  if(!off) return "";
+  const label = off.half ? `½ off${off.start ? " · from " + off.start : ""}` : "off day";
+  return ` <span class="off-tag">${label}</span>`;
 }
 
 function escapeHtml(str){
@@ -162,8 +229,15 @@ function showSaveStatus(msg, isError){
 
 function updateDayWeekReadout(){
   const date = document.getElementById("entryDate").value;
-  document.getElementById("dayWeekReadout").textContent =
-    date ? `${dayName(date)} · Week ${weekNumber(date, state.profile.startDate)}` : "—";
+  const el = document.getElementById("dayWeekReadout");
+  if(!date){ el.textContent = "—"; return; }
+  const wk = weekNumber(date, state.profile.startDate);
+  let txt = `${dayName(date)} · Week ${wk}`;
+  if(state.profile.startDate && date < state.profile.startDate) txt = `${dayName(date)} · before start`;
+  else if(state.profile.endDate && date > state.profile.endDate) txt = `${dayName(date)} · after end`;
+  const off = offDayInfo(date);
+  if(off) txt += off.half ? `  ·  ½ off day${off.start ? " (from " + off.start + ")" : ""}` : "  ·  off day";
+  el.textContent = txt;
 }
 
 /* ---------- entry actions ---------- */
@@ -215,23 +289,82 @@ function openProfileModal(){
   document.getElementById("profileName").value = state.profile.name || "";
   document.getElementById("profileCompany").value = state.profile.company || "";
   document.getElementById("profileStart").value = state.profile.startDate || "";
-  document.getElementById("profileOffDay").value = state.profile.offDay || "Sunday";
+  document.getElementById("profileEnd").value = state.profile.endDate || "";
+  buildOffDayControls();
   document.getElementById("profileModal").hidden = false;
 }
 function closeProfileModal(){ document.getElementById("profileModal").hidden = true; }
 
+function buildOffDayControls(){
+  const wrap = document.getElementById("offDayList");
+  wrap.innerHTML = WEEKDAYS.map(day => {
+    const cur = state.profile.offDays.find(o => o.day === day);
+    const on = !!cur;
+    const half = on && cur.half;
+    return `
+      <div class="offday-row" data-day="${day}">
+        <label class="offday-check">
+          <input type="checkbox" class="offday-toggle" ${on ? "checked" : ""}>
+          <span>${day}</span>
+        </label>
+        <select class="offday-type" ${on ? "" : "disabled"}>
+          <option value="full" ${half ? "" : "selected"}>Full day</option>
+          <option value="half" ${half ? "selected" : ""}>Half day</option>
+        </select>
+        <input type="time" class="offday-time" value="${cur ? cur.start : ""}"
+               ${on && half ? "" : "hidden"} ${on && half ? "" : "disabled"}>
+      </div>`;
+  }).join("");
+
+  wrap.querySelectorAll(".offday-row").forEach(row => {
+    const cb = row.querySelector(".offday-toggle");
+    const type = row.querySelector(".offday-type");
+    const time = row.querySelector(".offday-time");
+    const sync = () => {
+      const half = type.value === "half";
+      type.disabled = !cb.checked;
+      time.disabled = !(cb.checked && half);
+      time.hidden = !(cb.checked && half);
+    };
+    cb.addEventListener("change", sync);
+    type.addEventListener("change", sync);
+  });
+}
+
+function collectOffDays(){
+  const out = [];
+  document.querySelectorAll("#offDayList .offday-row").forEach(row => {
+    if(!row.querySelector(".offday-toggle").checked) return;
+    const half = row.querySelector(".offday-type").value === "half";
+    out.push({
+      day: row.dataset.day,
+      half,
+      start: half ? row.querySelector(".offday-time").value : ""
+    });
+  });
+  return out;
+}
+
 async function saveProfile(){
-  state.profile = {
+  const start = document.getElementById("profileStart").value;
+  const end = document.getElementById("profileEnd").value;
+  if(start && end && end < start){
+    showSaveStatus("Work period end can't be before the start.", true);
+    return;
+  }
+  state.profile = normalizeProfile({
     name: document.getElementById("profileName").value.trim(),
     company: document.getElementById("profileCompany").value.trim(),
-    startDate: document.getElementById("profileStart").value,
-    offDay: document.getElementById("profileOffDay").value
-  };
+    startDate: start,
+    endDate: end,
+    offDays: collectOffDays()
+  });
   try{
     await persist();
     closeProfileModal();
     renderProfile();
     renderTable();
+    updateDayWeekReadout();
     showSaveStatus("Details saved ✓", false);
   }catch(e){
     showSaveStatus(e.message || "Save failed.", true);
@@ -305,6 +438,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
   renderProfile();
   renderTable();
+  updateDayWeekReadout();
   updateSyncIndicator();
 
   document.getElementById("entryDate").addEventListener("change", updateDayWeekReadout);
@@ -322,6 +456,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadData();
     renderProfile();
     renderTable();
+    updateDayWeekReadout();
   });
   document.getElementById("signOutBtn").addEventListener("click", () => {
     state.token = null;
