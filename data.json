@@ -17,7 +17,9 @@
           },
           {
             "day": "Sunday",
-            "half": false
+            "half": false,
+            "start": "",
+            "end": ""
           }
         ]
       },
@@ -27,7 +29,9 @@
         "days": [
           {
             "day": "Friday",
-            "half": false
+            "half": false,
+            "start": "",
+            "end": ""
           },
           {
             "day": "Saturday",
@@ -131,6 +135,10 @@
     {
       "date": "2026-09-02",
       "notes": "2 Sep 2026 - New Features & Feedback for majliskahwin.com (IT)\n\nWorks carried out:\n- Motion video ordering: added a motion video that plays before the digital card.\n- Guestbook book feature (in progress): started letting customers pick a template to have their guestbook printed physically by Reino.\n- Other fixes: made the live preview form sticky on wide screens; sorted guestbook/wish-card photos by event instead of one mixed list; fixed digital card textareas to respect line breaks; stopped background music overlapping the intro video; redesigned the expired-session (CSRF) page.\n- Received more feedback on majliskahwin.com for further improvements.\n\nTheoretical / technical linkage:\n- The new guestbook book feature needs page count, price and weight locked in at order time, so photos uploaded later don't affect an already-paid order."
+    },
+    {
+      "date": "2026-09-03",
+      "notes": "*UPDATE MAJLISKAHWIN.COM 3/9/26*\n1. TEMPLATE PRINT GUESTBOOK — customer boleh pilih template ✅\n2. BUKU GUESTBOOK PRINT DARI REINO  ✅\n3. warna penunjuk arah boleh tukar ✅\n4. created by majliskahwin moveable ✅\n5. color picker by hex value ✅ \n6. \"ACCENT COLOR\" > \"Warna Butang & Bar Bawah\" ✅\n7. SUSUN KEDUDUKAN TEMPLATE ✅\n8. live session 3 jam ✅\n9. ⁠ada center line edit design ✅ \n\nlittle brainstorming among IT department for other system"
     }
   ]
 }
