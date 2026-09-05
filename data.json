@@ -135,6 +135,10 @@
     {
       "date": "2026-09-02",
       "notes": "2 Sep 2026 - New Features & Feedback for majliskahwin.com (IT)\n\nWorks carried out:\n- Motion video ordering: added a motion video that plays before the digital card.\n- Guestbook book feature (in progress): started letting customers pick a template to have their guestbook printed physically by Reino.\n- Other fixes: made the live preview form sticky on wide screens; sorted guestbook/wish-card photos by event instead of one mixed list; fixed digital card textareas to respect line breaks; stopped background music overlapping the intro video; redesigned the expired-session (CSRF) page.\n- Received more feedback on majliskahwin.com for further improvements.\n\nTheoretical / technical linkage:\n- The new guestbook book feature needs page count, price and weight locked in at order time, so photos uploaded later don't affect an already-paid order."
+    },
+    {
+      "date": "2026-09-05",
+      "notes": "1. fix minor bug- majliskahwin.com\n2. helping sales department"
     }
   ]
 }
