@@ -143,6 +143,10 @@
     {
       "date": "2026-09-06",
       "notes": "helping sale department handling customer request to ensure smooth company operational during weekend"
+    },
+    {
+      "date": "2026-09-07",
+      "notes": "TASK ADAM (MAJLISKAHWIN.COM):\n\n1. Buang Watermark preview untuk Kad Digital sahaja di Fullscreen ✅\n2. Ucapan \"Semoga.. Kami\" di Kad Fizikal Back, tak synronize bila save di Admin & Customer ✅\n3. Buatkan contoh & Letak link contoh di Guestbook Digital ✅\n4. Bila On video Motion, bila buka Kad Digital, akan preview Window dulu, then akan Nampak Video Motion, kemudian scroll ke Bawah baru Nampak Kad Digital\n5. Untuk kad yang tak center macam ni (https://majliskahwin.com/admin/template-form.php?slug=kad-15), Ornament Pemisah tak boleh gerak ✅\n6. Bahagian social media dalam Kad Digital, buatkan warna font & icon boleh tukar warna. Kalau background gelap, boleh tukar font & icon warna cerah ✅\n7. Bila kita Duplicate Kad di bahagian Produk, kalau ada slug yang sama wording, then nak save, system akan auto rejet dan x boleh save. So, kena ubah slug dulu ✅\n8. Buatkan Kad Fizikal, Sticker, Bunting, Penunjuk Arah & Guestbook akan available di bahagian koleksi Homepage website. \n9. Xperlu jadikan Produk Digital sebagai wajib beli. Contoh Customer nak checkout Sticker sahaja, jadi akan terus Add To Cart Sticker sahaja.\n\nonly ticked are done."
     }
   ]
 }
