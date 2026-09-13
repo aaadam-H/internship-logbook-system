@@ -145,6 +145,72 @@ function totalWeeks(startStr, endStr){
   if(diffDays < 0) return null;
   return Math.floor(diffDays/7) + 1;
 }
+/* ---------- smart date detection ----------
+   Parses a leading date / date-range off the start of a notes entry, e.g.
+   "20-21 Jul 2026 - ..." / "31 Jul - 1 Aug 2026 - ..." / "5 Aug 2026 - ..."
+   so multi-day notes can be split into one log entry per day automatically. */
+function monthIndexFromName(str){
+  if(!str) return -1;
+  const s = str.slice(0,3).toLowerCase();
+  return MONTH_NAMES.findIndex(m => m.toLowerCase() === s);
+}
+function isoFromYMD(y, mIdx, d){
+  const date = new Date(y, mIdx, d);
+  if(date.getFullYear() !== y || date.getMonth() !== mIdx || date.getDate() !== d) return null;
+  return isoOf(date);
+}
+function datesBetween(startStr, endStr){
+  const out = [];
+  let cur = toLocalDate(startStr);
+  const end = toLocalDate(endStr);
+  while(cur <= end){
+    out.push(isoOf(cur));
+    cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
+  }
+  return out;
+}
+function parseLeadingDateRange(text){
+  const s = (text || "").trim();
+  if(!s) return null;
+
+  // "31 Jul - 1 Aug 2026 - ..." (range crossing a month)
+  let m = s.match(/^(\d{1,2})\s+([A-Za-z]{3,9})\s*[-–]\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\b/);
+  if(m){
+    const mi1 = monthIndexFromName(m[2]), mi2 = monthIndexFromName(m[4]);
+    if(mi1 >= 0 && mi2 >= 0){
+      const year = Number(m[5]);
+      const endYear = mi2 < mi1 ? year + 1 : year;
+      const start = isoFromYMD(year, mi1, Number(m[1]));
+      const end = isoFromYMD(endYear, mi2, Number(m[3]));
+      if(start && end && end >= start) return { start, end };
+    }
+  }
+
+  // "20-21 Jul 2026 - ..." (range within one month)
+  m = s.match(/^(\d{1,2})\s*[-–]\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\b/);
+  if(m){
+    const mi = monthIndexFromName(m[3]);
+    if(mi >= 0){
+      const year = Number(m[4]);
+      const start = isoFromYMD(year, mi, Number(m[1]));
+      const end = isoFromYMD(year, mi, Number(m[2]));
+      if(start && end && end >= start) return { start, end };
+    }
+  }
+
+  // "5 Aug 2026 - ..." (single day)
+  m = s.match(/^(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\b/);
+  if(m){
+    const mi = monthIndexFromName(m[2]);
+    if(mi >= 0){
+      const date = isoFromYMD(Number(m[3]), mi, Number(m[1]));
+      if(date) return { start: date, end: date };
+    }
+  }
+
+  return null;
+}
+
 function currentWeekLabel(){
   const p = state.profile;
   if(!p.startDate) return "—";
@@ -244,7 +310,7 @@ function renderTable(){
       <td class="col-date">${prettyDate(entry.date)}</td>
       <td class="col-day">${dayName(entry.date)}${offTag(entry.date)}</td>
       <td class="col-week">${weekNumber(entry.date, state.profile.startDate)}</td>
-      <td class="notes-cell">${escapeHtml(entry.notes)}</td>
+      <td class="notes-cell">${escapeHtml(entry.notes)}${renderAttachments(entry)}</td>
       <td class="col-actions">${state.token ? `<button class="row-delete" data-date="${entry.date}">delete</button>` : ""}</td>
     </tr>
   `).join("");
@@ -252,8 +318,40 @@ function renderTable(){
   body.querySelectorAll(".row-delete").forEach(btn => {
     btn.addEventListener("click", () => deleteEntry(btn.dataset.date));
   });
+  body.querySelectorAll(".att-remove").forEach(btn => {
+    btn.addEventListener("click", () => removeAttachment(btn.dataset.date, Number(btn.dataset.idx)));
+  });
 
   updateExportCount();
+}
+
+function renderAttachments(entry){
+  const atts = entry.attachments || [];
+  if(!atts.length) return "";
+  return `<div class="attachments">${atts.map((a, i) => attachmentHtml(entry.date, a, i)).join("")}</div>`;
+}
+function attachmentHtml(date, att, idx){
+  const isImage = /\.(png|jpe?g|gif|webp|svg)$/i.test(att.name);
+  const removeBtn = state.token
+    ? `<button type="button" class="att-remove" data-date="${date}" data-idx="${idx}" title="Remove link only — the file stays in the repo">×</button>`
+    : "";
+  if(isImage){
+    return `<span class="att-item att-thumb"><a href="${att.url}" target="_blank" rel="noopener"><img src="${att.url}" alt="${escapeHtml(att.name)}" loading="lazy"></a>${removeBtn}</span>`;
+  }
+  return `<span class="att-item att-file"><a href="${att.url}" target="_blank" rel="noopener">📎 ${escapeHtml(att.name)}</a>${removeBtn}</span>`;
+}
+
+async function removeAttachment(date, idx){
+  const entry = state.entries.find(e => e.date === date);
+  if(!entry || !entry.attachments) return;
+  entry.attachments.splice(idx, 1);
+  if(!entry.attachments.length) delete entry.attachments;
+  try{
+    await persist();
+    renderTable();
+  }catch(e){
+    showSaveStatus(e.message || "Remove failed.", true);
+  }
 }
 
 function offTag(dateStr){
@@ -303,21 +401,131 @@ function updateDayWeekReadout(){
   el.textContent = txt;
 }
 
+let dateDetectTimer = null;
+function handleNotesInput(){
+  clearTimeout(dateDetectTimer);
+  dateDetectTimer = setTimeout(updateDateDetectHint, 250);
+}
+function updateDateDetectHint(){
+  const notes = document.getElementById("entryNotes").value;
+  const hint = document.getElementById("dateDetectHint");
+  const parsed = parseLeadingDateRange(notes);
+  if(!parsed){ hint.textContent = ""; return; }
+  document.getElementById("entryDate").value = parsed.start;
+  updateDayWeekReadout();
+  if(parsed.start === parsed.end){
+    hint.textContent = `📅 Detected date: ${prettyDate(parsed.start)}`;
+  }else{
+    const n = datesBetween(parsed.start, parsed.end).length;
+    hint.textContent = `📅 Detected range: ${prettyDate(parsed.start)} – ${prettyDate(parsed.end)} — will save as ${n} entries`;
+  }
+}
+
+/* ---------- attachments (uploaded to /uploads in the repo) ---------- */
+let pendingFiles = [];
+const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+
+function renderAttachmentPreview(){
+  const wrap = document.getElementById("attachmentPreview");
+  if(!pendingFiles.length){ wrap.innerHTML = ""; return; }
+  wrap.innerHTML = pendingFiles.map((f, i) => `
+    <span class="att-pending">${escapeHtml(f.name)} <button type="button" class="att-pending-remove" data-idx="${i}">×</button></span>
+  `).join("");
+  wrap.querySelectorAll(".att-pending-remove").forEach(btn => {
+    btn.addEventListener("click", () => {
+      pendingFiles.splice(Number(btn.dataset.idx), 1);
+      renderAttachmentPreview();
+    });
+  });
+}
+
+function sanitizeFilename(name){
+  return name.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/-+/g, "-");
+}
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadAttachment(file, dateStr){
+  const base64 = await fileToBase64(file);
+  const path = `uploads/${dateStr}-${Date.now()}-${sanitizeFilename(file.name)}`;
+  const res = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": `token ${state.token}`,
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: `Add attachment — ${file.name}`,
+      content: base64,
+      branch: CONFIG.GITHUB_BRANCH
+    })
+  });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Upload failed for ${file.name} (${res.status})`);
+  }
+  return {
+    name: file.name,
+    path,
+    url: `https://raw.githubusercontent.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/${CONFIG.GITHUB_BRANCH}/${path}`
+  };
+}
+
 /* ---------- entry actions ---------- */
 async function saveEntry(){
-  const date = document.getElementById("entryDate").value;
   const notes = document.getElementById("entryNotes").value.trim();
-  if(!date){ showSaveStatus("Pick a date first.", true); return; }
   if(!notes){ showSaveStatus("Write something before saving.", true); return; }
 
-  const existing = state.entries.find(e => e.date === date);
-  if(existing){ existing.notes = notes; } else { state.entries.push({ date, notes }); }
+  const parsed = parseLeadingDateRange(notes);
+  let dates;
+  if(parsed){
+    dates = datesBetween(parsed.start, parsed.end);
+  }else{
+    const manualDate = document.getElementById("entryDate").value;
+    if(!manualDate){ showSaveStatus("Pick a date first.", true); return; }
+    dates = [manualDate];
+  }
+
+  let newAttachments = [];
+  if(pendingFiles.length){
+    showSaveStatus("Uploading attachments…", false);
+    try{
+      for(const file of pendingFiles){
+        newAttachments.push(await uploadAttachment(file, dates[0]));
+      }
+    }catch(e){
+      console.error(e);
+      showSaveStatus(e.message || "Attachment upload failed.", true);
+      return;
+    }
+  }
+
+  dates.forEach(date => {
+    const existing = state.entries.find(e => e.date === date);
+    if(existing){
+      existing.notes = notes;
+      if(newAttachments.length) existing.attachments = (existing.attachments || []).concat(newAttachments);
+    }else{
+      const entry = { date, notes };
+      if(newAttachments.length) entry.attachments = newAttachments;
+      state.entries.push(entry);
+    }
+  });
 
   showSaveStatus("Saving…", false);
   try{
     await persist();
-    showSaveStatus("Saved ✓", false);
+    showSaveStatus(dates.length > 1 ? `Saved ${dates.length} entries ✓` : "Saved ✓", false);
     document.getElementById("entryNotes").value = "";
+    document.getElementById("dateDetectHint").textContent = "";
+    pendingFiles = [];
+    renderAttachmentPreview();
     renderProfile();
     renderTable();
   }catch(e){
@@ -621,6 +829,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("entryDate").addEventListener("change", updateDayWeekReadout);
   document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
+
+  document.getElementById("entryNotes").addEventListener("input", handleNotesInput);
+  document.getElementById("entryFiles").addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+    const tooBig = files.filter(f => f.size > MAX_ATTACHMENT_BYTES);
+    if(tooBig.length){
+      showSaveStatus(`${tooBig.map(f => f.name).join(", ")} is over 20MB — pick a smaller file.`, true);
+    }
+    pendingFiles = pendingFiles.concat(files.filter(f => f.size <= MAX_ATTACHMENT_BYTES));
+    e.target.value = "";
+    renderAttachmentPreview();
+  });
 
   document.getElementById("signInBtn").addEventListener("click", openSignInModal);
   document.getElementById("cancelSignIn").addEventListener("click", closeSignInModal);
