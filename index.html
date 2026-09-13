@@ -70,8 +70,14 @@
         </div>
         <label class="field field-notes">
           <span>What did you do today?</span>
-          <textarea id="entryNotes" rows="4" placeholder="Log today's tasks, learnings, meetings…"></textarea>
+          <textarea id="entryNotes" rows="4" placeholder="Log today's tasks, learnings, meetings… (start with a date like &quot;20-21 Jul 2026 -&quot; and it'll figure out the date itself)"></textarea>
+          <span class="date-hint" id="dateDetectHint"></span>
         </label>
+        <label class="field field-files">
+          <span>Attachments <small>(images, PDFs, docs — optional)</small></span>
+          <input type="file" id="entryFiles" multiple>
+        </label>
+        <div class="attachment-preview" id="attachmentPreview"></div>
         <div class="field-row field-row-end">
           <span class="save-status" id="saveStatus"></span>
           <button class="btn btn-primary" id="saveEntryBtn" type="button">Save entry</button>
