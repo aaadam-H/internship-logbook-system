@@ -151,6 +151,17 @@
     {
       "date": "2026-09-09",
       "notes": "created API to reino pipeline from majliskahwin. refer github repo for details"
+    },
+    {
+      "date": "2026-09-14",
+      "notes": "moving PC setup to another location to accommodate workplace changes",
+      "attachments": [
+        {
+          "name": "IMG_6618.jpeg",
+          "path": "uploads/2026-09-14-1789369508926-IMG_6618.jpeg",
+          "url": "https://raw.githubusercontent.com/aaadam-H/internship-logbook-system/main/uploads/2026-09-14-1789369508926-IMG_6618.jpeg"
+        }
+      ]
     }
   ]
 }
