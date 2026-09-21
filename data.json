@@ -162,6 +162,10 @@
           "url": "https://raw.githubusercontent.com/aaadam-H/internship-logbook-system/main/uploads/2026-09-14-1789369531267-IMG_6618.jpeg"
         }
       ]
+    },
+    {
+      "date": "2026-09-21",
+      "notes": "moved majliskahwin.com from shared hosting server to VPS to ensure traffic load in the future remain stable with help of IT executive"
     }
   ]
 }
