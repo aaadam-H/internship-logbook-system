@@ -211,6 +211,53 @@ function parseLeadingDateRange(text){
   return null;
 }
 
+/* ---------- import from file ----------
+   Reads a plain-text / markdown log (one or more entries, each starting
+   with a line like "20-21 Jul 2026 - Title", optionally as a markdown
+   heading "## 20-21 Jul 2026 - Title") and turns it into staged entries,
+   splitting multi-day ranges the same way manual saves do. */
+function stripLineMarkup(line){
+  return line.replace(/^#{1,6}\s*/, "").replace(/^[-*]\s+/, "").trimEnd();
+}
+
+function parseImportFile(text){
+  const lines = (text || "").replace(/\r\n/g, "\n").split("\n");
+  const blocks = [];
+  let current = null;
+  let skippedLines = 0;
+
+  lines.forEach(line => {
+    const stripped = stripLineMarkup(line);
+    const range = parseLeadingDateRange(stripped);
+    if(range){
+      current = { range, lines: [stripped.trim()] };
+      blocks.push(current);
+    }else if(current){
+      current.lines.push(line);
+    }else if(line.trim()){
+      skippedLines++;
+    }
+  });
+
+  const byDate = new Map();  // later blocks win on date collisions within the same file
+  blocks.forEach(block => {
+    const notes = block.lines.join("\n").trim();
+    if(!notes) return;
+    datesBetween(block.range.start, block.range.end).forEach(date => {
+      byDate.set(date, notes);
+    });
+  });
+
+  const entries = [...byDate.entries()]
+    .map(([date, notes]) => ({ date, notes }))
+    .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+  const warnings = [];
+  if(skippedLines) warnings.push(`${skippedLines} line(s) before the first dated entry were ignored.`);
+
+  return { entries, warnings };
+}
+
 function currentWeekLabel(){
   const p = state.profile;
   if(!p.startDate) return "—";
@@ -546,6 +593,63 @@ async function deleteEntry(date){
   }
 }
 
+/* ---------- import modal ---------- */
+let importDraft = [];
+
+function openImportModal(fileName, parsedFile){
+  importDraft = parsedFile.entries;
+  document.getElementById("importFileName").textContent = fileName;
+
+  const conflicts = importDraft.filter(e => state.entries.some(ex => ex.date === e.date)).length;
+  const parts = [`${importDraft.length} ${importDraft.length === 1 ? "entry" : "entries"} detected.`];
+  if(conflicts) parts.push(`${conflicts} will replace an existing entry.`);
+  parts.push(...parsedFile.warnings);
+  document.getElementById("importSummary").textContent = parts.join(" ");
+
+  const body = document.getElementById("importPreviewBody");
+  if(!importDraft.length){
+    body.innerHTML = `<tr><td colspan="3">No dated entries found — expected a line like "20-21 Jul 2026 - …" somewhere in the file.</td></tr>`;
+  }else{
+    body.innerHTML = importDraft.map(e => {
+      const isConflict = state.entries.some(ex => ex.date === e.date);
+      const preview = e.notes.split("\n").find(l => l.trim()) || "";
+      return `
+        <tr class="${isConflict ? "import-row-conflict" : ""}">
+          <td class="ip-date">${prettyDate(e.date)}</td>
+          <td class="ip-day">${dayName(e.date)}</td>
+          <td class="ip-preview">${escapeHtml(preview)}${isConflict ? `<span class="ip-conflict-tag">replaces existing</span>` : ""}</td>
+        </tr>`;
+    }).join("");
+  }
+
+  document.getElementById("confirmImport").disabled = !importDraft.length;
+  document.getElementById("importModal").hidden = false;
+}
+function closeImportModal(){
+  document.getElementById("importModal").hidden = true;
+  importDraft = [];
+}
+
+async function confirmImportEntries(){
+  if(!importDraft.length) return;
+  importDraft.forEach(({ date, notes }) => {
+    const existing = state.entries.find(e => e.date === date);
+    if(existing){ existing.notes = notes; } else { state.entries.push({ date, notes }); }
+  });
+
+  showSaveStatus("Importing…", false);
+  try{
+    await persist();
+    showSaveStatus(`Imported ${importDraft.length} ${importDraft.length === 1 ? "entry" : "entries"} ✓`, false);
+    closeImportModal();
+    renderProfile();
+    renderTable();
+  }catch(e){
+    console.error(e);
+    showSaveStatus(e.message || "Import failed.", true);
+  }
+}
+
 /* ---------- sign-in modal ---------- */
 function openSignInModal(){
   const modal = document.getElementById("signInModal");
@@ -841,6 +945,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.target.value = "";
     renderAttachmentPreview();
   });
+
+  document.getElementById("importFileInput").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    try{
+      const text = await file.text();
+      openImportModal(file.name, parseImportFile(text));
+    }catch(err){
+      console.error(err);
+      showSaveStatus("Could not read that file.", true);
+    }
+  });
+  document.getElementById("cancelImport").addEventListener("click", closeImportModal);
+  document.getElementById("confirmImport").addEventListener("click", confirmImportEntries);
 
   document.getElementById("signInBtn").addEventListener("click", openSignInModal);
   document.getElementById("cancelSignIn").addEventListener("click", closeSignInModal);

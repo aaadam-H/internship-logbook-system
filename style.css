@@ -304,6 +304,25 @@ tr:hover td{ background: rgba(169,117,47,0.08); }
   border-radius:var(--radius);
 }
 .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
+.modal-wide{ max-width:640px; }
+
+/* ---- Import ---- */
+.import-btn{ display:inline-flex; align-items:center; cursor:pointer; }
+.import-preview-wrap{ max-height:44vh; overflow-y:auto; border:1px solid var(--rule-light); border-radius:var(--radius); margin-bottom:14px; }
+.import-preview-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.import-preview-table th{
+  text-align:left; font-size:11px; font-weight:600; color:var(--ink-soft);
+  border-bottom:2px solid var(--ink); padding:6px 8px; position:sticky; top:0; background:var(--paper-light);
+}
+.import-preview-table td{ padding:7px 8px; border-bottom:1px solid var(--rule-light); vertical-align:top; }
+.import-preview-table td.ip-date{ white-space:nowrap; width:90px; }
+.import-preview-table td.ip-day{ white-space:nowrap; width:70px; color:var(--ink-soft); }
+.import-preview-table td.ip-preview{ color:var(--ink-soft); }
+.import-row-conflict td{ background:rgba(156,74,50,0.08); }
+.ip-conflict-tag{
+  display:inline-block; margin-left:6px; font-size:10px; padding:0 5px;
+  border:1px solid var(--rust); color:var(--rust); border-radius:2px; white-space:nowrap;
+}
 .modal{ max-height:90vh; overflow-y:auto; }
 
 /* ---- Off-day controls (profile modal) ---- */

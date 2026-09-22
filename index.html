@@ -80,6 +80,10 @@
         <div class="attachment-preview" id="attachmentPreview"></div>
         <div class="field-row field-row-end">
           <span class="save-status" id="saveStatus"></span>
+          <label class="btn btn-outline import-btn" for="importFileInput">
+            Import from file…
+            <input type="file" id="importFileInput" accept=".md,.markdown,.txt" hidden>
+          </label>
           <button class="btn btn-primary" id="saveEntryBtn" type="button">Save entry</button>
         </div>
       </section>
@@ -165,6 +169,24 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" id="cancelProfile" type="button">Cancel</button>
       <button class="btn btn-primary" id="saveProfileBtn" type="button">Save details</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import preview modal -->
+<div class="modal-backdrop" id="importModal" hidden>
+  <div class="modal modal-wide">
+    <h3>Import from <span id="importFileName"></span></h3>
+    <p id="importSummary"></p>
+    <div class="import-preview-wrap">
+      <table class="import-preview-table">
+        <thead><tr><th>Date</th><th>Day</th><th>Preview</th></tr></thead>
+        <tbody id="importPreviewBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelImport" type="button">Cancel</button>
+      <button class="btn btn-primary" id="confirmImport" type="button">Import entries</button>
     </div>
   </div>
 </div>
